@@ -7,13 +7,24 @@ auth_bp = Blueprint('auth', __name__)
 @auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
 
+    # Validate incoming data
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
+    role = data.get('role', 'user')  # Default role is 'user'
+
+    if not username or not email or not password:
+        return jsonify({"msg": "Username, email, and password are required"}), 400
+
+    # Check if the username or email already exists
     if User.query.filter_by(username=username).first():
         return jsonify({"msg": "Username already exists"}), 400
+    if User.query.filter_by(email=email).first():
+        return jsonify({"msg": "Email already exists"}), 400
 
-    new_user = User(username=username)
+    # Create new user
+    new_user = User(username=username, email=email, role=role)
     new_user.set_password(password)
     db.session.add(new_user)
     db.session.commit()
@@ -30,7 +41,12 @@ def login():
     if not user or not user.check_password(password):
         return jsonify({"msg": "Invalid credentials"}), 401
 
-    access_token = create_access_token(identity={"user_id": user.id, "username": user.username})
+    access_token = create_access_token(identity={
+        "user_id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role
+    })
     return jsonify({"access_token": access_token}), 200
 
 @auth_bp.route('/protected', methods=['GET'])
