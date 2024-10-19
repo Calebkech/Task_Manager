@@ -1,6 +1,6 @@
 print("Routes module loaded")  # Debugging log
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, url_for
 from flask_jwt_extended import (
     create_access_token, 
     create_refresh_token, 
@@ -8,14 +8,16 @@ from flask_jwt_extended import (
     get_jwt_identity, 
     get_jwt
 )
-from auth.models import User, db, TokenBlocklist
-from auth.utils import roles_required
+from auth.models import User, db, TokenBlocklist, ResetToken
+from auth.utils import roles_required, is_strong_password
 from auth import auth_bp
-
-#auth_bp = Blueprint('auth', __name__)
+import uuid
+from flask_mail import Mail, Message
+from datetime import timedelta, datetime
 
 # In-memory store for revoked tokens (for simplicity)
 revoked_tokens = set()
+mail = Mail()
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -38,6 +40,11 @@ def register():
         return jsonify({"msg": "Username already exists"}), 400
     if User.query.filter_by(email=email).first():
         return jsonify({"msg": "Email already exists"}), 400
+    
+        # Check password strength
+    is_valid, message = is_strong_password(password)
+    if not is_valid:
+        return jsonify({"msg": message}), 400
 
     new_user = User(username=username, email=email, role=role)
     new_user.set_password(password)
@@ -97,7 +104,7 @@ def logout():
 
 @auth_bp.route('/admin/users', methods=['GET'])
 @jwt_required()
-@roles_required('admin')
+@roles_required('admin', 'manager')
 def get_all_users():
     users = User.query.all()
     return jsonify([user.to_dict() for user in users])
@@ -115,3 +122,78 @@ def get_manager_tasks():
 def protected():
     current_user = get_jwt_identity()
     return jsonify({"msg": f"Welcome, {current_user['username']}!"}), 200
+
+@auth_bp.route('/reset-password', methods=['POST'])
+def request_password_reset():
+    """Request a password reset email."""
+    data = request.get_json()
+    email = data.get('email')
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"msg": "User with that email does not exist"}), 404
+
+    # Generate a unique token (UUID)
+    token = str(uuid.uuid4())
+
+    # Store the token in the database
+    reset_token = ResetToken(token=token, user_id=user.id)
+    db.session.add(reset_token)
+    db.session.commit()
+
+    # Create the reset URL
+    reset_url = url_for('auth.reset_password', token=token, _external=True)
+
+    # Send the reset email
+    msg = Message(
+        'Password Reset Request',
+        recipients=[user.email]
+    )
+    msg.body = f"Hi {user.username},\nClick the link below to reset your password:\n{reset_url}"
+
+    mail.send(msg)
+
+    return jsonify({"msg": "Password reset email sent"}), 200
+
+@auth_bp.route('/reset-password/<token>', methods=['POST'])
+def reset_password(token):
+    """Reset the user's password using the provided token."""
+    # Look up the token in the database but don't mark it as used yet
+    reset_token = ResetToken.query.filter_by(token=token, used=False).first()
+
+    if not reset_token:
+        return jsonify({"msg": "Invalid or expired token"}), 400
+
+    user = User.query.get(reset_token.user_id)
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    # Get the new password from the request
+    data = request.get_json()
+    new_password = data.get('password')
+
+    if not new_password:
+        return jsonify({"msg": "Password is required"}), 400
+
+    # Check password strength
+    is_valid, message = is_strong_password(new_password)
+    if not is_valid:
+        return jsonify({"msg": message}), 400  # Return without marking the token as used
+
+    # If password is valid, update the user's password and mark the token as used
+    user.set_password(new_password)
+    reset_token.used = True  # Mark the token as used
+    db.session.commit()
+
+    return jsonify({"msg": "Password updated successfully"}), 200
+
+
+@auth_bp.route('/admin/cleanup-tokens', methods=['DELETE'])
+@jwt_required()
+@roles_required('admin')
+def cleanup_tokens():
+    """Remove tokens older than 30 days."""
+    cutoff_date = datetime.utcnow() - timedelta(days=30)
+    ResetToken.query.filter(ResetToken.created_at < cutoff_date).delete()
+    db.session.commit()
+    return jsonify({"msg": "Old tokens cleaned up"}), 200

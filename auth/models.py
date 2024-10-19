@@ -40,3 +40,14 @@ class TokenBlocklist(db.Model):
 
     def __repr__(self):
         return f"<TokenBlocklist jti={self.jti}>"
+
+class ResetToken(db.Model):
+    __tablename__ = 'reset_tokens'
+
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(255), nullable=False, unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    used = db.Column(db.Boolean, default=False)  # Track if the token has been used
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('reset_tokens', lazy=True))

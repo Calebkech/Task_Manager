@@ -87,7 +87,7 @@ def protected():
 
 @auth_bp.route('/admin/users', methods=['GET'])
 @jwt_required()
-@roles_required('admin', 'manager')  # Only 'admin' role can access this route
+@roles_required('admin', 'manager')  # Only 'admin' and 'manager' role can access this route
 def get_all_users():
     """Admin-only route to view all users."""
     users = User.query.all()
