@@ -141,8 +141,8 @@ def request_password_reset():
     db.session.add(reset_token)
     db.session.commit()
 
-    # Create the reset URL
-    reset_url = url_for('auth.reset_password', token=token, _external=True)
+    # Create the reset URL (point to the frontend)
+    reset_url = f"http://127.0.0.1:5173/reset-password/{token}"  # Frontend route
 
     # Send the reset email
     msg = Message(
@@ -155,10 +155,20 @@ def request_password_reset():
 
     return jsonify({"msg": "Password reset email sent"}), 200
 
+
+@auth_bp.route('/validate-reset-password/<token>', methods=['GET'])
+def validate_reset_token(token):
+    """Validate the password reset token."""
+    reset_token = ResetToken.query.filter_by(token=token, used=False).first()
+
+    if not reset_token:
+        return jsonify({"msg": "Invalid or expired token"}), 400
+
+    return jsonify({"msg": "Token is valid"}), 200
+
 @auth_bp.route('/reset-password/<token>', methods=['POST'])
 def reset_password(token):
     """Reset the user's password using the provided token."""
-    # Look up the token in the database but don't mark it as used yet
     reset_token = ResetToken.query.filter_by(token=token, used=False).first()
 
     if not reset_token:
@@ -168,24 +178,25 @@ def reset_password(token):
     if not user:
         return jsonify({"msg": "User not found"}), 404
 
-    # Get the new password from the request
     data = request.get_json()
     new_password = data.get('password')
 
     if not new_password:
         return jsonify({"msg": "Password is required"}), 400
 
-    # Check password strength
     is_valid, message = is_strong_password(new_password)
     if not is_valid:
-        return jsonify({"msg": message}), 400  # Return without marking the token as used
+        return jsonify({"msg": message}), 400
 
-    # If password is valid, update the user's password and mark the token as used
-    user.set_password(new_password)
-    reset_token.used = True  # Mark the token as used
-    db.session.commit()
+    try:
+        user.set_password(new_password)
+        reset_token.used = True  # Mark the token as used
+        db.session.commit()
+        return jsonify({"msg": "Password updated successfully"}), 200
 
-    return jsonify({"msg": "Password updated successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": f"Error updating password: {str(e)}"}), 500
 
 
 @auth_bp.route('/admin/cleanup-tokens', methods=['DELETE'])

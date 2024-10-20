@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from flask_mail import Mail
-
+from flask_cors import CORS
 from auth.models import db, TokenBlocklist  # Import your models
 from auth.routes import auth_bp  # Import the auth blueprint
 
@@ -12,7 +12,8 @@ mail = Mail()
 def create_app():
     app = Flask(__name__)
     app.config.from_object('config.Config')
-    mail.init_app(app) 
+    mail.init_app(app)
+    CORS(app)
 
     # Initialize extensions
     db.init_app(app)
