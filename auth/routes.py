@@ -117,9 +117,9 @@ def get_manager_tasks():
     return jsonify({"msg": "Welcome, Manager or Admin!"})
 
 
-@auth_bp.route('/protected', methods=['GET'])
+@auth_bp.route('/dashboard', methods=['GET'])
 @jwt_required()
-def protected():
+def dashboard():
     current_user = get_jwt_identity()
     return jsonify({"msg": f"Welcome, {current_user['username']}!"}), 200
 

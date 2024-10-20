@@ -1,31 +1,56 @@
-// src/components/Dashboard.jsx
-import React from 'react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    // Clear any stored tokens (if applicable)
-    localStorage.removeItem('token');
-    // Redirect to login
-    navigate('/login');
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://127.0.0.1:5000/auth/dashboard', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setMessage(response.data.msg);
+      } catch (err) {
+        setError('Failed to load dashboard. Please log in again.');
+        navigate('/login'); // Redirect to login if unauthorized
+      }
+    };
+
+    fetchDashboardData();
+  }, [navigate]);
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        'http://127.0.0.1:5000/auth/logout',
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      localStorage.removeItem('token'); // Remove token from local storage
+      navigate('/login'); // Redirect to login
+    } catch (err) {
+      console.error('Logout failed:', err);
+      setError('Failed to log out. Please try again.');
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">Welcome to Your Dashboard</h1>
-        <p className="text-center mb-4">
-          You are successfully logged in. Feel free to explore the app!
-        </p>
-        <button
-          onClick={handleLogout}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-        >
-          Logout
-        </button>
-      </div>
+    <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-lg mx-auto mt-20">
+      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {message && <p className="text-green-500 text-lg">{message}</p>}
+
+      <button
+        onClick={handleLogout}
+        className="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition"
+      >
+        Logout
+      </button>
     </div>
   );
 };

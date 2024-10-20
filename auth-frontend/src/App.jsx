@@ -22,14 +22,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/request-reset" element={<RequestReset />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <Dashboard /> {/* Dashboard is protected */}
-            </ProtectedRoute>
-          } 
-        />
+        <Route path="/dashboard" element={<Dashboard />} /> {/* Dashboard route */}
       </Routes>
     </Router>
   );
