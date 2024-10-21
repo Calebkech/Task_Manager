@@ -4,7 +4,7 @@ import Register from './components/Register';
 import Login from './components/Login';
 import RequestReset from './components/RequestReset';
 import ResetPassword from './components/ResetPassword';
-import Dashboard from './components/Dashboard'; // Import Dashboard
+import Profile from './components/Profile';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -22,7 +22,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/request-reset" element={<RequestReset />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/dashboard" element={<Dashboard />} /> {/* Dashboard route */}
+        <Route path="/profile" element={<Profile />} /> {/* Profile route */}
       </Routes>
     </Router>
   );
