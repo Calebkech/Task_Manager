@@ -4,28 +4,33 @@ from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
 from flask_mail import Mail
 from flask_cors import CORS
-from auth.models import db, TokenBlocklist  # Import your models
-from auth.routes import auth_bp  # Import the auth blueprint
+
+# Import models
+from auth.models import db  # Import the initialized db instance from auth
+from auth.models import User, TokenBlocklist, ResetToken
+from taskmanager.models import Task, Category, Subtask
+from auth.routes import auth_bp
+from taskmanager.routes import task_bp
 
 mail = Mail()
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object('config.Config')
-    mail.init_app(app)
-    CORS(app)
 
     # Initialize extensions
     db.init_app(app)
     migrate = Migrate(app, db)
     jwt = JWTManager(app)
+    mail.init_app(app)
+    CORS(app)
 
     # Register blueprints
-    app.register_blueprint(auth_bp, url_prefix='/auth')  # Register the auth blueprint
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(task_bp, url_prefix='/tasks')
 
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):
-        """Check if the token's JTI is in the blocklist."""
         jti = jwt_payload["jti"]
         token = TokenBlocklist.query.filter_by(jti=jti).first()
         return token is not None
@@ -37,6 +42,9 @@ def create_app():
     @jwt.invalid_token_loader
     def invalid_token_callback(error):
         return jsonify({"msg": "Invalid token"}), 422
+
+    with app.app_context():
+        db.create_all()  # Ensure all models are registered
 
     return app
 

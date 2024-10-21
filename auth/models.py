@@ -1,7 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
- # Import your database instance
 
 db = SQLAlchemy()
 
@@ -12,7 +11,7 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(50), default='user')  # Role field: 'user' or 'admin'
+    role = db.Column(db.String(50), default='user')  # Role: 'user' or 'admin'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
@@ -35,8 +34,8 @@ class TokenBlocklist(db.Model):
     __tablename__ = 'token_blocklist'
 
     id = db.Column(db.Integer, primary_key=True)
-    jti = db.Column(db.String(36), nullable=False, unique=True)  # Store the JWT's unique identifier (JTI)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # Timestamp when the token was revoked
+    jti = db.Column(db.String(36), nullable=False, unique=True)  # JWT identifier (JTI)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # Revocation timestamp
 
     def __repr__(self):
         return f"<TokenBlocklist jti={self.jti}>"

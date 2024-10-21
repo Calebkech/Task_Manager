@@ -1,4 +1,6 @@
 from flask import Blueprint, jsonify
+from auth.models import db, User, TokenBlocklist, ResetToken
+from taskmanager.models import Task, Category, Subtask
 
 auth_bp = Blueprint('auth', __name__)
 
