@@ -23,7 +23,17 @@ class Task(db.Model):
 
     # Use string-based references for relationships
     category = db.relationship('Category', backref='tasks', lazy=True)
-    user = db.relationship('User', backref='tasks', lazy=True)  # String reference to avoid circular import
+    user = db.relationship('User', backref='tasks', lazy=True)  # Avoid circular import
+    subtasks = db.relationship('Subtask', back_populates='task', lazy=True)  # Use back_populates here
+
+    @property
+    def percentage_completion(self):
+        """Calculate percentage completion based on subtasks."""
+        if not self.subtasks:
+            return 0  # No subtasks, so 0% completion
+        completed_subtasks = len([st for st in self.subtasks if st.completed])
+        return int((completed_subtasks / len(self.subtasks)) * 100)
+
 
 class Subtask(db.Model):
     __tablename__ = 'subtasks'
@@ -33,4 +43,5 @@ class Subtask(db.Model):
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    task = db.relationship('Task', backref='subtasks', lazy=True)
+    # Use back_populates instead of backref to avoid conflict
+    task = db.relationship('Task', back_populates='subtasks', lazy=True)

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from .models import db, Task, Category
+from .models import db, Task, Category, Subtask
 from datetime import datetime
 
 task_bp = Blueprint('tasks', __name__, url_prefix='/tasks')
@@ -52,7 +52,8 @@ def get_tasks():
             "description": task.description,
             "priority": task.priority,
             "due_date": task.due_date.strftime('%Y-%m-%d') if task.due_date else None,
-            "completed": task.completed
+            "completed": task.completed,
+            "percentage_completion": task.percentage_completion
         } for task in tasks]
 
         return jsonify(task_list), 200
@@ -214,3 +215,98 @@ def delete_category(category_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": f"Error deleting category: {str(e)}"}), 500
+
+# -------------------- SUBTASK ROUTES --------------------
+
+# Create a new subtask for a specific task
+@task_bp.route('/<int:task_id>/subtasks', methods=['POST'])
+@jwt_required()
+def create_subtask(task_id):
+    try:
+        current_user = get_jwt_identity()
+        task = Task.query.filter_by(id=task_id, user_id=current_user['user_id']).first()
+
+        if not task:
+            return jsonify({"msg": "Task not found"}), 404
+
+        data = request.get_json()
+        title = data.get('title')
+
+        if not title:
+            return jsonify({"msg": "Subtask title is required"}), 400
+
+        subtask = Subtask(title=title, task_id=task_id, created_at=datetime.utcnow())
+        db.session.add(subtask)
+        db.session.commit()
+
+        return jsonify({"msg": "Subtask created successfully", "subtask": subtask.title}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": f"Error creating subtask: {str(e)}"}), 500
+
+# Get all subtasks for a specific task
+@task_bp.route('/<int:task_id>/subtasks', methods=['GET'])
+@jwt_required()
+def get_subtasks(task_id):
+    try:
+        current_user = get_jwt_identity()
+        task = Task.query.filter_by(id=task_id, user_id=current_user['user_id']).first()
+
+        if not task:
+            return jsonify({"msg": "Task not found"}), 404
+
+        subtasks = Subtask.query.filter_by(task_id=task_id).all()
+        subtask_list = [{"id": st.id, "title": st.title, "completed": st.completed} for st in subtasks]
+
+        return jsonify(subtask_list), 200
+
+    except Exception as e:
+        return jsonify({"msg": f"Error fetching subtasks: {str(e)}"}), 500
+
+# Update a subtask by task_id and subtask_id
+@task_bp.route('/<int:task_id>/subtasks/<int:subtask_id>', methods=['PUT'])
+@jwt_required()
+def update_subtask(task_id, subtask_id):
+    try:
+        # Retrieve the subtask from the database
+        subtask = Subtask.query.filter_by(id=subtask_id, task_id=task_id).first()
+        
+        if not subtask:
+            return jsonify({"msg": "Subtask not found"}), 404
+
+        data = request.get_json()
+
+        # Convert completed field to boolean
+        completed = data.get('completed', False)  # Defaults to False if not provided
+        if isinstance(completed, str):  # Check if it's a string
+            completed = completed.lower() == 'true'  # Convert 'true'/'false' to boolean
+
+        subtask.title = data.get('title', subtask.title)
+        subtask.completed = completed  # Update with boolean value
+
+        db.session.commit()
+        return jsonify({"msg": "Subtask updated successfully"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": f"Error updating subtask: {str(e)}"}), 500
+    
+# Delete a subtask by ID
+@task_bp.route('/<int:task_id>/subtasks/<int:subtask_id>', methods=['DELETE'])
+@jwt_required()
+def delete_subtask(task_id, subtask_id):
+    try:
+        current_user = get_jwt_identity()
+        subtask = Subtask.query.filter_by(id=subtask_id, task_id=task_id).first()
+
+        if not subtask:
+            return jsonify({"msg": "Subtask not found"}), 404
+
+        db.session.delete(subtask)
+        db.session.commit()
+        return jsonify({"msg": "Subtask deleted successfully"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": f"Error deleting subtask: {str(e)}"}), 500
