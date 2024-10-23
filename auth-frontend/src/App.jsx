@@ -5,25 +5,59 @@ import Login from './components/Login';
 import RequestReset from './components/RequestReset';
 import ResetPassword from './components/ResetPassword';
 import Profile from './components/Profile';
+import TaskManager from './components/tasks/TaskManager';
+import Navbar from './components/layout/Navbar';
+import { Dashboard } from './components/dashboard/Dashboard';
+import { NavigationProvider } from './contexts/NavigationContext'; // Import NavigationProvider
 
-// Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('token'); // Check if the user is logged in (based on token)
-
-  return token ? children : <Navigate to="/login" />; // Redirect to login if not authenticated
+  const token = localStorage.getItem('token');
+  return token ? (
+    <div>
+      <Navbar />
+      <main className="container mx-auto px-4 py-8">{children}</main>
+    </div>
+  ) : (
+    <Navigate to="/login" />
+  );
 };
 
 function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/request-reset" element={<RequestReset />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/profile" element={<Profile />} /> {/* Profile route */}
-      </Routes>
+      <NavigationProvider>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/request-reset" element={<RequestReset />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tasks"
+            element={
+              <ProtectedRoute>
+                <TaskManager />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </NavigationProvider>
     </Router>
   );
 }

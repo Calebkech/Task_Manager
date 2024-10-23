@@ -23,7 +23,11 @@ def create_app():
     migrate = Migrate(app, db)
     jwt = JWTManager(app)
     mail.init_app(app)
-    CORS(app)
+    CORS(app, resources={r"/*": {"origins": "*"}},
+     supports_credentials=True,
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+     allow_headers=["Authorization", "Content-Type", "X-Requested-With"])
+
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/auth')

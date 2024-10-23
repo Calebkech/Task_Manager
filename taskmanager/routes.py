@@ -5,6 +5,16 @@ from datetime import datetime
 
 task_bp = Blueprint('tasks', __name__, url_prefix='/tasks')
 
+from flask import make_response
+
+@task_bp.route('', methods=['OPTIONS'])
+def handle_options():
+    response = make_response()
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+    return response
+
 # Create a task
 @task_bp.route('/new-task', methods=['POST'])
 @jwt_required()
@@ -39,7 +49,7 @@ def create_task():
         return jsonify({"msg": f"Error creating task: {str(e)}"}), 500
 
 # Get all tasks for the logged-in user
-@task_bp.route('/', methods=['GET'])
+@task_bp.route('', methods=['GET'])
 @jwt_required()
 def get_tasks():
     try:
