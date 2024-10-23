@@ -23,7 +23,7 @@ def create_app():
     migrate = Migrate(app, db)
     jwt = JWTManager(app)
     mail.init_app(app)
-    CORS(app, resources={r"/*": {"origins": "*"}},
+    CORS(app, resources={r"/*": {"origins": "http://127.0.0.1:5173"}},
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["Authorization", "Content-Type", "X-Requested-With"])

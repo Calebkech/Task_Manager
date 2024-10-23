@@ -40,7 +40,7 @@ export const deleteTask = (taskId) => api.delete(`/tasks/${taskId}`);
 
 export const getSubtasks = (taskId) => api.get(`/tasks/${taskId}/subtasks`);
 export const createSubtask = (taskId, subtaskData) =>
-  api.post(`/tasks/${taskId}/subtasks/new`, subtaskData);
+  api.post(`/tasks/${taskId}/subtasks`, subtaskData);
 export const updateSubtask = (taskId, subtaskId, subtaskData) =>
   api.put(`/tasks/${taskId}/subtasks/${subtaskId}`, subtaskData);
 export const deleteSubtask = (taskId, subtaskId) =>
