@@ -7,7 +7,8 @@ import ResetPassword from './components/ResetPassword';
 import Profile from './components/Profile';
 import TaskManager from './components/tasks/TaskManager';
 import Navbar from './components/layout/Navbar';
-import { Dashboard } from './components/dashboard/Dashboard';
+import Dashboard from './components/dashboard/Dashboard';
+
 import { NavigationProvider } from './contexts/NavigationContext'; // Import NavigationProvider
 
 const ProtectedRoute = ({ children }) => {

@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
 
 const TaskModal = ({ isOpen, onClose, onSubmit, initialData = {} }) => {
   const [title, setTitle] = useState('');
@@ -16,7 +15,7 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData = {} }) => {
       setPriority(initialData.priority || 'Medium');
       setDueDate(initialData.dueDate || '');
     }
-  }, [initialData]); // Re-run whenever `initialData` changes
+  }, [initialData]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -36,7 +35,7 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData = {} }) => {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
+          <div className="fixed inset-0 bg-black bg-opacity-40" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -50,43 +49,49 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData = {} }) => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                <Dialog.Title className="text-lg font-medium leading-6 text-gray-900">
+              <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-xl bg-white p-8 shadow-2xl transition-all">
+                <Dialog.Title className="text-2xl font-semibold text-gray-900 mb-4">
                   {initialData ? 'Edit Task' : 'New Task'}
                 </Dialog.Title>
-                <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+                
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Title"
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
                     required
                   />
+                  
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Description"
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    rows={3}
                   />
+                  
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
                   >
                     <option value="High">High</option>
                     <option value="Medium">Medium</option>
                     <option value="Low">Low</option>
                   </select>
+                  
                   <input
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-md"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
                   />
+                  
                   <button
                     type="submit"
-                    className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition"
+                    className="w-full bg-gray-900 text-white py-3 rounded-lg hover:bg-gray-800 transition"
                   >
                     Save Task
                   </button>
@@ -94,7 +99,7 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData = {} }) => {
 
                 <button
                   onClick={onClose}
-                  className="mt-4 w-full bg-gray-300 py-2 rounded-md hover:bg-gray-400 transition"
+                  className="mt-4 w-full bg-gray-100 text-gray-800 py-3 rounded-lg hover:bg-gray-200 transition"
                 >
                   Cancel
                 </button>

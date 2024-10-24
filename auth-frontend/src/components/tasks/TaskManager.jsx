@@ -1,3 +1,4 @@
+// src/components/tasks/TaskManager.jsx
 import React, { useEffect, useState } from 'react';
 import TaskModal from './TaskModal';
 import SubtaskModal from '../subtasks/SubtaskModal';
@@ -21,6 +22,9 @@ const TaskManager = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedSubtask, setSelectedSubtask] = useState(null);
   const [activeTaskId, setActiveTaskId] = useState(null);
+
+  const [taskModalKey, setTaskModalKey] = useState(0);
+  const [subtaskModalKey, setSubtaskModalKey] = useState(0);
 
   useEffect(() => {
     fetchTasks();
@@ -53,7 +57,7 @@ const TaskManager = () => {
         await createTask(taskData);
       }
       fetchTasks();
-      closeTaskModal(); // Close and clear the modal
+      closeTaskModal();
     } catch (error) {
       console.error('Error saving task:', error);
     }
@@ -67,7 +71,7 @@ const TaskManager = () => {
         await createSubtask(activeTaskId, subtaskData);
       }
       await fetchSubtasks(activeTaskId);
-      closeSubtaskModal(); // Close and clear the modal
+      closeSubtaskModal();
     } catch (error) {
       console.error('Error saving subtask:', error);
     }
@@ -103,64 +107,79 @@ const TaskManager = () => {
     }
   };
 
+  const openNewTaskModal = () => {
+    setSelectedTask(null);
+    setTaskModalKey((prevKey) => prevKey + 1);
+    setIsTaskModalOpen(true);
+  };
+
+  const openNewSubtaskModal = () => {
+    setSelectedSubtask(null);
+    setSubtaskModalKey((prevKey) => prevKey + 1);
+    setIsSubtaskModalOpen(true);
+  };
+
   const closeTaskModal = () => {
     setIsTaskModalOpen(false);
-    setSelectedTask(null); // Clear task data from memory
+    setSelectedTask(null);
   };
 
   const closeSubtaskModal = () => {
     setIsSubtaskModalOpen(false);
-    setSelectedSubtask(null); // Clear subtask data from memory
+    setSelectedSubtask(null);
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Task Manager</h1>
+    <div className="container mx-auto p-8 bg-white min-h-screen">
+
       <button
-        onClick={() => setIsTaskModalOpen(true)}
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        onClick={openNewTaskModal}
+        className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition mb-4"
       >
         Add Task
       </button>
 
-      <ul className="mt-4">
+      <ul className="mt-6 space-y-4">
         {tasks.map((task) => (
-          <li key={task.id} className="bg-gray-100 p-4 rounded mb-4">
+          <li key={task.id} className="bg-gray-50 p-6 rounded-lg shadow-sm">
             <div className="flex justify-between items-center">
-              <div className="flex items-center">
+              <div className="flex items-center space-x-4">
                 <input
                   type="checkbox"
                   checked={task.completed}
                   onChange={() => handleToggleTaskComplete(task)}
-                  className="mr-2"
+                  className="h-5 w-5 accent-gray-800"
                 />
                 <span
-                  className={task.completed ? 'line-through text-gray-400' : ''}
+                  className={`${
+                    task.completed ? 'line-through text-gray-500' : 'text-gray-800'
+                  } text-lg`}
                 >
                   {task.title}
                 </span>
               </div>
-              <div className="space-x-2">
+
+              <div className="flex space-x-4">
                 <button
                   onClick={() => {
                     setSelectedTask(task);
                     setIsTaskModalOpen(true);
                   }}
-                  className="bg-green-500 text-white text-sm px-2 py-1 rounded hover:bg-green-600"
+                  className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
                 >
-                  Edit Task
+                  Edit
                 </button>
                 <button
                   onClick={() => fetchSubtasks(task.id)}
-                  className="bg-blue-500 text-white text-sm px-2 py-1 rounded hover:bg-blue-600"
+                  className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
                 >
-                  Manage Subtasks
+                  Subtasks
                 </button>
                 <button
                   onClick={() => handleDeleteTask(task.id)}
-                  className="bg-red-500 text-white text-sm px-2 py-1 rounded-md hover:bg-red-600"
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-500 transition"
                 >
-                  Delete Task
+                  Delete
                 </button>
               </div>
             </div>
@@ -168,11 +187,8 @@ const TaskManager = () => {
             {activeTaskId === task.id && (
               <div className="mt-4">
                 <button
-                  onClick={() => {
-                    setSelectedSubtask(null);
-                    setIsSubtaskModalOpen(true);
-                  }}
-                  className="bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600 mb-2"
+                  onClick={openNewSubtaskModal}
+                  className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition mb-2"
                 >
                   Add Subtask
                 </button>
@@ -195,6 +211,7 @@ const TaskManager = () => {
       </ul>
 
       <TaskModal
+        key={taskModalKey}
         isOpen={isTaskModalOpen}
         onClose={closeTaskModal}
         onSubmit={handleTaskSubmit}
@@ -202,6 +219,7 @@ const TaskManager = () => {
       />
 
       <SubtaskModal
+        key={subtaskModalKey}
         isOpen={isSubtaskModalOpen}
         onClose={closeSubtaskModal}
         onSubmit={handleSubtaskSubmit}

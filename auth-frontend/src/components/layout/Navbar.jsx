@@ -1,3 +1,4 @@
+// src/components/layout/Navbar.jsx
 import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
@@ -10,15 +11,31 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-indigo-500 to-blue-600 p-4 shadow-md">
+    <nav className="bg-gray-900 p-6 shadow-lg">
       <div className="container mx-auto flex justify-between items-center">
-        <Link to="/dashboard" className="text-white font-bold text-xl">Dashboard</Link>
-        <div className="space-x-4">
-          <Link to="/tasks" className="text-white hover:underline">Tasks</Link>
-          <Link to="/profile" className="text-white hover:underline">Profile</Link>
+        <Link
+          to="/dashboard"
+          className="text-white text-2xl font-extrabold hover:text-gray-300 transition"
+        >
+          Dashboard
+        </Link>
+
+        <div className="space-x-6 flex items-center">
+          <Link
+            to="/tasks"
+            className="text-white text-lg hover:text-gray-300 transition"
+          >
+            Tasks
+          </Link>
+          <Link
+            to="/profile"
+            className="text-white text-lg hover:text-gray-300 transition"
+          >
+            Profile
+          </Link>
           <button
             onClick={handleLogout}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+            className="bg-gray-700 text-white text-lg px-4 py-2 rounded-lg hover:bg-gray-800 transition"
           >
             Logout
           </button>

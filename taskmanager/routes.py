@@ -54,17 +54,27 @@ def create_task():
 def get_tasks():
     try:
         current_user = get_jwt_identity()
-        tasks = Task.query.filter_by(user_id=current_user['user_id']).all()
 
-        task_list = [{
-            "id": task.id,
-            "title": task.title,
-            "description": task.description,
-            "priority": task.priority,
-            "due_date": task.due_date.strftime('%Y-%m-%d') if task.due_date else None,
-            "completed": task.completed,
-            "percentage_completion": task.percentage_completion
-        } for task in tasks]
+        # Order tasks by id or due_date in descending order to get the most recent first
+        tasks = (
+            Task.query
+            .filter_by(user_id=current_user['user_id'])
+            .order_by(Task.id.desc())  # Or Task.due_date.desc() if you prefer sorting by due date
+            .all()
+        )
+
+        task_list = [
+            {
+                "id": task.id,
+                "title": task.title,
+                "description": task.description,
+                "priority": task.priority,
+                "due_date": task.due_date.strftime('%Y-%m-%d') if task.due_date else None,
+                "completed": task.completed,
+                "percentage_completion": task.percentage_completion
+            }
+            for task in tasks
+        ]
 
         return jsonify(task_list), 200
 
