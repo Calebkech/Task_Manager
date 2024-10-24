@@ -9,6 +9,7 @@ from flask_jwt_extended import (
     get_jwt
 )
 from auth.models import User, db, TokenBlocklist, ResetToken
+from taskmanager.models import Task
 from auth.utils import roles_required, is_strong_password
 from auth import auth_bp
 import uuid
@@ -120,8 +121,34 @@ def get_manager_tasks():
 @auth_bp.route('/profile', methods=['GET'])
 @jwt_required()
 def profile():
-    current_user = get_jwt_identity()
-    return jsonify({"msg": f"Welcome, {current_user['username']}!"}), 200
+    try:
+        # Get the current user ID from the JWT token
+        current_user_data = get_jwt_identity()
+        user_id = current_user_data['user_id']
+
+        # Query the User model for user details
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"msg": "User not found"}), 404
+
+        # Count the user's tasks from the Task model
+        tasks_count = Task.query.filter_by(user_id=user_id).count()
+
+        # Prepare the user's profile data
+        profile_data = {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "created_at": user.created_at.strftime('%Y-%m-%d'),
+            "tasks_count": tasks_count
+        }
+
+        # Return the profile data as JSON
+        return jsonify({"msg": "Profile loaded successfully", "user": profile_data}), 200
+
+    except Exception as e:
+        return jsonify({"msg": f"Error fetching profile: {str(e)}"}), 500
 
 @auth_bp.route('/reset-password', methods=['POST'])
 def request_password_reset():

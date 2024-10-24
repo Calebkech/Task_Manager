@@ -22,7 +22,7 @@ const Login = () => {
       localStorage.setItem('token', response.data.access_token); // Store token
 
       // Redirect to profile on successful login
-      navigate('/profile');
+      navigate('/dashboard');
     } catch (err) {
       setError('Invalid username or password');
     } finally {
