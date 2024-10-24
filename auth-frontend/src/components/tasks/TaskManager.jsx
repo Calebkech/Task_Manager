@@ -10,6 +10,7 @@ import {
   deleteSubtask,
   updateTask,
   createTask,
+  deleteTask,
 } from '../../services/api';
 
 const TaskManager = () => {
@@ -19,9 +20,8 @@ const TaskManager = () => {
   const [isSubtaskModalOpen, setIsSubtaskModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedSubtask, setSelectedSubtask] = useState(null);
-  const [activeTaskId, setActiveTaskId] = useState(null); 
+  const [activeTaskId, setActiveTaskId] = useState(null);
 
-  // Fetch tasks on component mount
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -53,8 +53,7 @@ const TaskManager = () => {
         await createTask(taskData);
       }
       fetchTasks();
-      setIsTaskModalOpen(false);
-      setSelectedTask(null);
+      closeTaskModal(); // Close and clear the modal
     } catch (error) {
       console.error('Error saving task:', error);
     }
@@ -68,21 +67,50 @@ const TaskManager = () => {
         await createSubtask(activeTaskId, subtaskData);
       }
       await fetchSubtasks(activeTaskId);
-      setIsSubtaskModalOpen(false);
-      setSelectedSubtask(null);
+      closeSubtaskModal(); // Close and clear the modal
     } catch (error) {
       console.error('Error saving subtask:', error);
     }
   };
 
+  const handleDeleteTask = async (taskId) => {
+    try {
+      await deleteTask(taskId);
+      fetchTasks();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
+
+  const handleToggleTaskComplete = async (task) => {
+    try {
+      await updateTask(task.id, { ...task, completed: !task.completed });
+      fetchTasks();
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
+
   const handleToggleSubtaskComplete = async (subtask) => {
     try {
-      const updatedSubtask = { ...subtask, completed: !subtask.completed };
-      await updateSubtask(activeTaskId, subtask.id, updatedSubtask);
+      await updateSubtask(activeTaskId, subtask.id, {
+        ...subtask,
+        completed: !subtask.completed,
+      });
       await fetchSubtasks(activeTaskId);
     } catch (error) {
       console.error('Error updating subtask:', error);
     }
+  };
+
+  const closeTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setSelectedTask(null); // Clear task data from memory
+  };
+
+  const closeSubtaskModal = () => {
+    setIsSubtaskModalOpen(false);
+    setSelectedSubtask(null); // Clear subtask data from memory
   };
 
   return (
@@ -106,7 +134,9 @@ const TaskManager = () => {
                   onChange={() => handleToggleTaskComplete(task)}
                   className="mr-2"
                 />
-                <span className={task.completed ? 'line-through text-gray-400' : ''}>
+                <span
+                  className={task.completed ? 'line-through text-gray-400' : ''}
+                >
                   {task.title}
                 </span>
               </div>
@@ -116,15 +146,21 @@ const TaskManager = () => {
                     setSelectedTask(task);
                     setIsTaskModalOpen(true);
                   }}
-                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                  className="bg-green-500 text-white text-sm px-2 py-1 rounded hover:bg-green-600"
                 >
                   Edit Task
                 </button>
                 <button
                   onClick={() => fetchSubtasks(task.id)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  className="bg-blue-500 text-white text-sm px-2 py-1 rounded hover:bg-blue-600"
                 >
                   Manage Subtasks
+                </button>
+                <button
+                  onClick={() => handleDeleteTask(task.id)}
+                  className="bg-red-500 text-white text-sm px-2 py-1 rounded-md hover:bg-red-600"
+                >
+                  Delete Task
                 </button>
               </div>
             </div>
@@ -160,17 +196,14 @@ const TaskManager = () => {
 
       <TaskModal
         isOpen={isTaskModalOpen}
-        onClose={() => setIsTaskModalOpen(false)}
+        onClose={closeTaskModal}
         onSubmit={handleTaskSubmit}
         initialData={selectedTask}
       />
 
       <SubtaskModal
         isOpen={isSubtaskModalOpen}
-        onClose={() => {
-          setIsSubtaskModalOpen(false);
-          setSelectedSubtask(null);
-        }}
+        onClose={closeSubtaskModal}
         onSubmit={handleSubtaskSubmit}
         initialData={selectedSubtask}
       />

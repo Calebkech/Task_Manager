@@ -24,7 +24,7 @@ class Task(db.Model):
     # Use string-based references for relationships
     category = db.relationship('Category', backref='tasks', lazy=True)
     user = db.relationship('User', backref='tasks', lazy=True)  # Avoid circular import
-    subtasks = db.relationship('Subtask', back_populates='task', lazy=True)  # Use back_populates here
+    subtasks = db.relationship('Subtask', back_populates='task', lazy=True, cascade='all, delete-orphan')  # Use back_populates here
 
     @property
     def percentage_completion(self):

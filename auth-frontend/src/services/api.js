@@ -1,6 +1,5 @@
 // src/services/api.js
 import axios from 'axios';
-import { useNavigation } from '../contexts/NavigationContext'; // Import useNavigation
 
 const api = axios.create({
   baseURL: 'http://127.0.0.1:5000',
@@ -8,7 +7,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   validateStatus: function (status) {
-    return status >= 200 && status < 300; // Resolve only if status code is 2xx
+    return status >= 200 && status < 300;
   },
 });
 
@@ -20,13 +19,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Modify interceptor to not use hooks directly
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const { navigate } = useNavigation(); // Get navigate from context
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('token'); // Clear token
-      navigate('/login'); // Redirect to login
+      // If unauthorized, clear token and redirect
+      localStorage.removeItem('token');
+      window.location.href = '/login'; // Use window.location to navigate
     }
     return Promise.reject(error);
   }
