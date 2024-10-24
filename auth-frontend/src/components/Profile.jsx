@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -54,39 +54,46 @@ const Profile = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-lg p-8 space-y-6 bg-white rounded-lg shadow-lg">
+      <div className="w-full max-w-lg p-8 space-y-8 bg-white rounded-lg shadow-lg">
         <h1 className="text-2xl font-semibold text-center text-gray-800">
           User Profile
         </h1>
 
         {user ? (
           <div className="space-y-4">
-            <div>
+            <div className="border-b pb-2">
               <h2 className="text-lg font-medium text-gray-700">Username</h2>
               <p className="text-gray-600">{user.username}</p>
             </div>
-            <div>
+            <div className="border-b pb-2">
               <h2 className="text-lg font-medium text-gray-700">Email</h2>
               <p className="text-gray-600">{user.email}</p>
             </div>
-            <div>
+            <div className="border-b pb-2">
               <h2 className="text-lg font-medium text-gray-700">Role</h2>
               <p className="text-gray-600 capitalize">{user.role}</p>
             </div>
-            <div>
+            <div className="border-b pb-2">
               <h2 className="text-lg font-medium text-gray-700">Join Date</h2>
-              <p className="text-gray-600">{user.created_at}</p>
+              <p className="text-gray-600">{new Date(user.created_at).toLocaleDateString()}</p>
             </div>
-            <div>
+            <div className="border-b pb-2">
               <h2 className="text-lg font-medium text-gray-700">Total Tasks</h2>
               <p className="text-gray-600">{user.tasks_count}</p>
             </div>
+
             <button
               onClick={handleLogout}
               className="w-full py-2 px-4 bg-black text-white rounded-md hover:bg-gray-800 transition"
             >
               Logout
             </button>
+            <Link
+              to="/request-reset"
+              className="block text-center text-sm text-blue-500 hover:underline"
+            >
+              Change Password?
+            </Link>
           </div>
         ) : (
           <p className="text-center text-gray-500">Loading profile...</p>

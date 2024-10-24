@@ -48,6 +48,8 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(''); // Clear any previous errors
+  
     if (!passwordsMatch) {
       setError('Passwords do not match');
       return;
@@ -56,18 +58,25 @@ const Register = () => {
       setError('Please ensure the password meets all criteria');
       return;
     }
+  
     try {
       const response = await axios.post('http://127.0.0.1:5000/auth/register', {
         username,
         email,
         password,
       });
-      setMessage(response.data.msg);
-      setTimeout(() => navigate('/login'), 3000);
+  
+      setMessage(response.data.msg); // Display success message
+      setTimeout(() => navigate('/login'), 3000); // Redirect to login after success
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      if (err.response && err.response.data.msg) {
+        setError(err.response.data.msg); // Display backend error message
+      } else {
+        setError('Registration failed. Please try again.');
+      }
     }
   };
+  
 
   return (
     <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-lg mx-auto mt-20">
