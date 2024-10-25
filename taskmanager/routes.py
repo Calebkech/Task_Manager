@@ -19,6 +19,9 @@ def handle_options():
 @task_bp.route('/new-task', methods=['POST'])
 @jwt_required()
 def create_task():
+    data = request.get_json()
+
+    print(f"Received data: {data}")  # Log received data
     try:
         current_user = get_jwt_identity()
         data = request.get_json()
@@ -55,24 +58,17 @@ def get_tasks():
     try:
         current_user = get_jwt_identity()
 
-        # Order tasks by id or due_date in descending order to get the most recent first
+        # Retrieve tasks ordered by due date (most recent due date first)
         tasks = (
             Task.query
             .filter_by(user_id=current_user['user_id'])
-            .order_by(Task.id.desc())  # Or Task.due_date.desc() if you prefer sorting by due date
+            .order_by(Task.due_date.desc().nullslast(), Task.id.desc())  # Order by due date first, then ID
             .all()
         )
 
+        # Convert each task into a dictionary
         task_list = [
-            {
-                "id": task.id,
-                "title": task.title,
-                "description": task.description,
-                "priority": task.priority,
-                "due_date": task.due_date.strftime('%Y-%m-%d') if task.due_date else None,
-                "completed": task.completed,
-                "percentage_completion": task.percentage_completion
-            }
+            task.to_dict()  # Use the to_dict() method from the model for consistency
             for task in tasks
         ]
 

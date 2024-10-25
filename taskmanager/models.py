@@ -21,19 +21,38 @@ class Task(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Use string-based references for relationships
+    # Relationships
     category = db.relationship('Category', backref='tasks', lazy=True)
-    user = db.relationship('User', backref='tasks', lazy=True)  # Avoid circular import
-    subtasks = db.relationship('Subtask', back_populates='task', lazy=True, cascade='all, delete-orphan')  # Use back_populates here
+    user = db.relationship('User', backref='tasks', lazy=True)
+    subtasks = db.relationship(
+        'Subtask',
+        back_populates='task',
+        lazy=True,
+        cascade='all, delete-orphan'
+    )
 
     @property
     def percentage_completion(self):
-        """Calculate percentage completion based on subtasks."""
+        """Calculate the percentage completion based on subtasks."""
         if not self.subtasks:
             return 0  # No subtasks, so 0% completion
         completed_subtasks = len([st for st in self.subtasks if st.completed])
         return int((completed_subtasks / len(self.subtasks)) * 100)
 
+    def to_dict(self):
+        """Convert the task instance to a dictionary for JSON responses."""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "priority": self.priority,
+            "due_date": self.due_date.isoformat() if self.due_date else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "completed": self.completed,
+            "category_id": self.category_id,
+            "user_id": self.user_id,
+            "percentage_completion": self.percentage_completion,
+        }
 
 class Subtask(db.Model):
     __tablename__ = 'subtasks'
