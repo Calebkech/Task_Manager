@@ -24,6 +24,26 @@ const Dashboard = () => {
     }
   };
 
+  const calculateTimeRemaining = (dueDate) => {
+    if (!dueDate) return 'No due date';
+
+    const now = new Date();
+    const due = new Date(dueDate);
+    const diffMs = due - now;
+
+    if (diffMs <= 0) return 'Overdue';
+
+    const minutes = Math.floor(diffMs / (1000 * 60));
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const weeks = Math.floor(days / 7);
+
+    if (minutes < 60) return `${minutes} mins remaining`;
+    if (hours < 24) return `${hours} hrs remaining`;
+    if (days < 7) return `${days} days remaining`;
+    return `${weeks} weeks remaining`;
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-8">
       {/* Overview Cards */}
@@ -66,35 +86,38 @@ const Dashboard = () => {
             {tasks.slice(0, 3).map((task) => (
               <li key={task.id} className="border-b pb-2">
                 <div className="flex justify-between">
-                  <span className={`font-medium ${task.completed ? 'line-through text-gray-400' : ''}`}>
+                  <span
+                    className={`font-medium ${task.completed ? 'line-through text-gray-400' : ''}`}
+                  >
                     {task.title}
                   </span>
                   <span className="text-sm text-gray-500">{task.priority}</span>
                 </div>
                 <p className="text-sm text-gray-600 mt-1">
-                  Due: {task.due_date ? 
-                    new Date(task.due_date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    }) : 'No due date'}
+                  {calculateTimeRemaining(task.due_date)}
                 </p>
-
               </li>
             ))}
           </ul>
-
         </div>
 
-        {/* Activity Feed */}
+        {/* Recent Activity with Checkbox Status */}
         <div className="bg-white p-4 rounded-lg shadow">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">Recent Activity</h3>
           <ul className="space-y-3">
             {tasks.slice(0, 5).map((task) => (
               <li key={task.id} className="flex justify-between items-center">
-                <span className={`text-sm ${task.completed ? 'text-green-600' : 'text-yellow-600'}`}>
-                  {task.completed ? 'Completed' : 'Pending'}
-                </span>
+                <input
+                  type="checkbox"
+                  checked={task.completed}
+                  readOnly
+                  className={`h-5 w-5 ${
+                    task.completed ? 'text-green-600' : 'text-yellow-600'
+                  }`}
+                  style={{
+                    accentColor: task.completed ? 'green' : 'orange',
+                  }}
+                />
                 <span className="text-gray-500 text-sm">{task.title}</span>
               </li>
             ))}
