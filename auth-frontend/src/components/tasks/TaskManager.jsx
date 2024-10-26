@@ -22,10 +22,10 @@ const TaskManager = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [selectedSubtask, setSelectedSubtask] = useState(null);
   const [activeTaskId, setActiveTaskId] = useState(null);
-
   const [taskModalKey, setTaskModalKey] = useState(0);
   const [subtaskModalKey, setSubtaskModalKey] = useState(0);
 
+  // Fetch tasks when the component mounts
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -49,6 +49,26 @@ const TaskManager = () => {
     }
   };
 
+  const calculateTimeRemaining = (dueDate) => {
+    if (!dueDate) return 'No due date';
+
+    const now = new Date();
+    const due = new Date(dueDate);
+    const diffMs = due - now;
+
+    if (diffMs <= 0) return 'Overdue';
+
+    const minutes = Math.floor(diffMs / (1000 * 60));
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const weeks = Math.floor(days / 7);
+
+    if (minutes < 60) return `${minutes} mins remaining`;
+    if (hours < 24) return `${hours} hrs remaining`;
+    if (days < 7) return `${days} days remaining`;
+    return `${weeks} weeks remaining`;
+  };
+
   const handleTaskSubmit = async (taskData) => {
     try {
       if (selectedTask) {
@@ -70,10 +90,40 @@ const TaskManager = () => {
       } else {
         await createSubtask(activeTaskId, subtaskData);
       }
-      await fetchSubtasks(activeTaskId);
+      fetchSubtasks(activeTaskId);
       closeSubtaskModal();
     } catch (error) {
       console.error('Error saving subtask:', error);
+    }
+  };
+
+  const handleToggleTaskComplete = async (task) => {
+    try {
+      const updatedTask = {
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        completed: !task.completed, // Toggle the completed status
+        due_date: task.due_date ? task.due_date.split('T')[0] : null, // Ensure correct date format
+      };
+  
+      await updateTask(task.id, updatedTask);
+      fetchTasks(); // Refresh tasks after the update
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
+  
+
+  const handleToggleSubtaskComplete = async (subtask) => {
+    try {
+      await updateSubtask(activeTaskId, subtask.id, {
+        ...subtask,
+        completed: !subtask.completed,
+      });
+      fetchSubtasks(activeTaskId);
+    } catch (error) {
+      console.error('Error updating subtask:', error);
     }
   };
 
@@ -86,24 +136,12 @@ const TaskManager = () => {
     }
   };
 
-  const handleToggleTaskComplete = async (task) => {
+  const handleDeleteSubtask = async (subtaskId) => {
     try {
-      await updateTask(task.id, { ...task, completed: !task.completed });
-      fetchTasks();
+      await deleteSubtask(activeTaskId, subtaskId);
+      fetchSubtasks(activeTaskId);
     } catch (error) {
-      console.error('Error updating task:', error);
-    }
-  };
-
-  const handleToggleSubtaskComplete = async (subtask) => {
-    try {
-      await updateSubtask(activeTaskId, subtask.id, {
-        ...subtask,
-        completed: !subtask.completed,
-      });
-      await fetchSubtasks(activeTaskId);
-    } catch (error) {
-      console.error('Error updating subtask:', error);
+      console.error('Error deleting subtask:', error);
     }
   };
 
@@ -131,7 +169,6 @@ const TaskManager = () => {
 
   return (
     <div className="container mx-auto p-8 bg-white min-h-screen">
-
       <button
         onClick={openNewTaskModal}
         className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition mb-4"
@@ -159,7 +196,10 @@ const TaskManager = () => {
                 </span>
               </div>
 
-              <div className="flex space-x-4">
+              <div className="flex items-center space-x-6">
+                <span className="text-sm text-gray-500">
+                  {calculateTimeRemaining(task.due_date)}
+                </span>
                 <button
                   onClick={() => {
                     setSelectedTask(task);
@@ -198,10 +238,7 @@ const TaskManager = () => {
                     setSelectedSubtask(subtask);
                     setIsSubtaskModalOpen(true);
                   }}
-                  onDelete={async (subtaskId) => {
-                    await deleteSubtask(task.id, subtaskId);
-                    await fetchSubtasks(task.id);
-                  }}
+                  onDelete={handleDeleteSubtask}
                   onToggleComplete={handleToggleSubtaskComplete}
                 />
               </div>

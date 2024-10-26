@@ -19,9 +19,6 @@ def handle_options():
 @task_bp.route('/new-task', methods=['POST'])
 @jwt_required()
 def create_task():
-    data = request.get_json()
-
-    print(f"Received data: {data}")  # Log received data
     try:
         current_user = get_jwt_identity()
         data = request.get_json()
@@ -29,22 +26,31 @@ def create_task():
         title = data.get('title')
         description = data.get('description', '')
         priority = data.get('priority', 'Medium')
-        due_date = data.get('due_date')
+        due_date = data.get('due_date')  # Use the correct field name from the frontend
 
         if not title:
             return jsonify({"msg": "Task title is required"}), 400
+
+        # Parse the due_date if provided
+        parsed_due_date = None
+        if due_date:
+            parsed_due_date = datetime.strptime(due_date, '%Y-%m-%d')
 
         task = Task(
             title=title,
             description=description,
             priority=priority,
-            due_date=datetime.strptime(due_date, '%Y-%m-%d') if due_date else None,
+            due_date=parsed_due_date,
             user_id=current_user['user_id'],
             created_at=datetime.utcnow()
         )
 
+        print(f"Received data: {data}")  # Log received data
+        print(f"Parsed due_date: {parsed_due_date}")  # Log parsed due date
+
         db.session.add(task)
         db.session.commit()
+
         return jsonify({"msg": "Task created successfully", "task": task.title}), 201
 
     except Exception as e:
@@ -119,6 +125,18 @@ def update_task(task_id):
         task.description = data.get('description', task.description)
         task.priority = data.get('priority', task.priority)
         task.completed = data.get('completed', task.completed)
+
+        # Handle due date update
+        due_date = data.get('due_date')
+        if due_date:
+            try:
+                task.due_date = datetime.strptime(due_date, '%Y-%m-%d')
+            except ValueError:
+                return jsonify({"msg": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+        # Commit the changes to the database
+        print(f"Received update data: {data}")  # Log received data
+        print(f"Parsed due_date: {due_date}")  # Log parsed due date
 
         db.session.commit()
         return jsonify({"msg": "Task updated successfully"}), 200

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// src/components/tasks/TaskModal.jsx
+import React, { useEffect, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 
@@ -7,27 +8,40 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData = {} }) => {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('Medium');
   const [dueDate, setDueDate] = useState('');
-  const [createdAt, setCreatedAt] = useState('');
 
-  // Populate modal with task data when editing
   useEffect(() => {
+    // Safely populate the form fields with initialData if available
     if (initialData) {
       setTitle(initialData.title || '');
       setDescription(initialData.description || '');
       setPriority(initialData.priority || 'Medium');
-      setDueDate(initialData.due_date ? initialData.due_date.split('T')[0] : '');
-      setCreatedAt(initialData.created_at ? new Date(initialData.created_at).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      }) : '');
+      setDueDate(
+        initialData.due_date
+          ? new Date(initialData.due_date).toISOString().split('T')[0]
+          : ''
+      );
+    } else {
+      // Reset the fields if no initialData is provided
+      setTitle('');
+      setDescription('');
+      setPriority('Medium');
+      setDueDate('');
     }
   }, [initialData]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ title, description, priority, due_date: dueDate });
-    onClose();
+
+    // Prepare the task data to send
+    const taskData = {
+      title,
+      description,
+      priority,
+      due_date: dueDate || null, // Ensure we send `null` if dueDate is not provided
+    };
+
+    onSubmit(taskData); // Call the submit handler with the task data
+    onClose(); // Close the modal after submission
   };
 
   return (
@@ -57,8 +71,8 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData = {} }) => {
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                <Dialog.Title className="text-lg font-medium leading-6 text-gray-900">
-                  {initialData ? 'Edit Task' : 'New Task'}
+                <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+                  {initialData?.id ? 'Edit Task' : 'New Task'}
                 </Dialog.Title>
                 <form onSubmit={handleSubmit} className="mt-4 space-y-4">
                   <input
@@ -90,24 +104,13 @@ const TaskModal = ({ isOpen, onClose, onSubmit, initialData = {} }) => {
                     onChange={(e) => setDueDate(e.target.value)}
                     className="w-full px-3 py-2 border rounded-md"
                   />
-                  {createdAt && (
-                    <p className="text-sm text-gray-500">
-                      Created on: {createdAt}
-                    </p>
-                  )}
-                  {dueDate && (
-                    <p className="text-sm text-gray-500">
-                      Due on: {dueDate}
-                    </p>
-                  )}
                   <button
                     type="submit"
-                    className="w-full bg-gray-800 text-white py-2 rounded-md hover:bg-gray-900 transition"
+                    className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-800 transition"
                   >
                     Save Task
                   </button>
                 </form>
-
                 <button
                   onClick={onClose}
                   className="mt-4 w-full bg-gray-300 py-2 rounded-md hover:bg-gray-400 transition"
