@@ -1,5 +1,5 @@
-// src/components/tasks/TaskManager.jsx
 import React, { useEffect, useState } from 'react';
+import { FaPlus, FaEdit, FaTrash, FaTasks, FaSearch, FaClipboardCheck } from 'react-icons/fa';
 import TaskModal from './TaskModal';
 import SubtaskModal from '../subtasks/SubtaskModal';
 import SubtaskList from '../subtasks/SubtaskList';
@@ -24,8 +24,8 @@ const TaskManager = () => {
   const [activeTaskId, setActiveTaskId] = useState(null);
   const [taskModalKey, setTaskModalKey] = useState(0);
   const [subtaskModalKey, setSubtaskModalKey] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch tasks when the component mounts
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -49,25 +49,9 @@ const TaskManager = () => {
     }
   };
 
-  const calculateTimeRemaining = (dueDate) => {
-    if (!dueDate) return 'No due date';
-
-    const now = new Date();
-    const due = new Date(dueDate);
-    const diffMs = due - now;
-
-    if (diffMs <= 0) return 'Overdue';
-
-    const minutes = Math.floor(diffMs / (1000 * 60));
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const weeks = Math.floor(days / 7);
-
-    if (minutes < 60) return `${minutes} mins remaining`;
-    if (hours < 24) return `${hours} hrs remaining`;
-    if (days < 7) return `${days} days remaining`;
-    return `${weeks} weeks remaining`;
-  };
+  const filteredTasks = tasks.filter((task) =>
+    task.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleTaskSubmit = async (taskData) => {
     try {
@@ -100,20 +84,16 @@ const TaskManager = () => {
   const handleToggleTaskComplete = async (task) => {
     try {
       const updatedTask = {
-        title: task.title,
-        description: task.description,
-        priority: task.priority,
-        completed: !task.completed, // Toggle the completed status
-        due_date: task.due_date ? task.due_date.split('T')[0] : null, // Ensure correct date format
+        ...task,
+        completed: !task.completed,
+        due_date: task.due_date ? task.due_date.split('T')[0] : null,
       };
-  
       await updateTask(task.id, updatedTask);
-      fetchTasks(); // Refresh tasks after the update
+      fetchTasks();
     } catch (error) {
       console.error('Error updating task:', error);
     }
   };
-  
 
   const handleToggleSubtaskComplete = async (subtask) => {
     try {
@@ -169,15 +149,28 @@ const TaskManager = () => {
 
   return (
     <div className="container mx-auto p-8 bg-white min-h-screen">
-      <button
-        onClick={openNewTaskModal}
-        className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition mb-4"
-      >
-        Add Task
-      </button>
+      <div className="flex items-center space-x-4 mb-6">
+        <FaSearch className="text-gray-500" />
+        <input
+          type="text"
+          placeholder="Search tasks..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full p-2 border rounded-md"
+        />
+      </div>
 
-      <ul className="mt-6 space-y-4">
-        {tasks.map((task) => (
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={openNewTaskModal}
+          className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition"
+        >
+          <FaPlus className="inline-block mr-2" /> Add Task
+        </button>
+      </div>
+
+      <ul className="space-y-4">
+        {filteredTasks.map((task) => (
           <li key={task.id} className="bg-gray-50 p-6 rounded-lg shadow-sm">
             <div className="flex justify-between items-center">
               <div className="flex items-center space-x-4">
@@ -185,7 +178,9 @@ const TaskManager = () => {
                   type="checkbox"
                   checked={task.completed}
                   onChange={() => handleToggleTaskComplete(task)}
-                  className="h-5 w-5 accent-gray-800"
+                  className={`h-5 w-5 ${
+                    task.completed ? 'text-green-500' : 'text-yellow-500'
+                  }`}
                 />
                 <span
                   className={`${
@@ -196,30 +191,30 @@ const TaskManager = () => {
                 </span>
               </div>
 
-              <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-500">
-                  {calculateTimeRemaining(task.due_date)}
+                  {task.due_date || 'No due date'}
                 </span>
                 <button
                   onClick={() => {
                     setSelectedTask(task);
                     setIsTaskModalOpen(true);
                   }}
-                  className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
+                  className="text-blue-500 hover:text-blue-600"
                 >
-                  Edit
+                  <FaEdit />
                 </button>
                 <button
                   onClick={() => fetchSubtasks(task.id)}
-                  className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
+                  className="text-green-500 hover:text-green-600"
                 >
-                  Subtasks
+                  <FaTasks />
                 </button>
                 <button
                   onClick={() => handleDeleteTask(task.id)}
-                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-500 transition"
+                  className="text-red-500 hover:text-red-600"
                 >
-                  Delete
+                  <FaTrash />
                 </button>
               </div>
             </div>
@@ -228,9 +223,9 @@ const TaskManager = () => {
               <div className="mt-4">
                 <button
                   onClick={openNewSubtaskModal}
-                  className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition mb-2"
+                  className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition mb-2"
                 >
-                  Add Subtask
+                  <FaPlus className="inline-block mr-2" /> Add Subtask
                 </button>
                 <SubtaskList
                   subtasks={subtasks}

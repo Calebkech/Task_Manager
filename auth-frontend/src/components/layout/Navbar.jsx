@@ -17,7 +17,7 @@ const Navbar = () => {
           to="/dashboard"
           className="text-white text-2xl font-extrabold hover:text-gray-300 transition"
         >
-          Dashboard
+          Task-Manager
         </Link>
 
         <div className="space-x-6 flex items-center">
