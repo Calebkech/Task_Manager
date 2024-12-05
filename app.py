@@ -11,6 +11,8 @@ from auth.models import User, TokenBlocklist, ResetToken
 from taskmanager.models import Task, Category, Subtask
 from auth.routes import auth_bp
 from taskmanager.routes import task_bp
+from admin.routes import admin_bp
+from admin.model import Settings
 
 mail = Mail()
 
@@ -32,6 +34,7 @@ def create_app():
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(task_bp, url_prefix='/tasks')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
 
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):
